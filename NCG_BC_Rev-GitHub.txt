@@ -1,0 +1,603 @@
+
+library(numDeriv)
+
+# generating data from Box-Cox for alpha = 0 using binary covariate
+
+data_0_Wei=function(n0,n1,g1,g2,p00,p01,c0,c1){
+
+b0=log(-log(p00))
+b1=log(-log(p01))-b0
+
+#treatment group
+
+t1=rep(NA,n1)
+d1=rep(NA,n1)
+x1=rep(1,n1)
+
+phi1=exp(b0+b1)
+
+U1=runif(n1,min=0,max=1)
+C1=rexp(n1,rate=c1)
+
+count1p=0
+count1c=0
+
+for(i in 1:n1){
+if(U1[i]<=p01){
+t1[i]=C1[i]
+d1[i]=0
+count1p=count1p+1
+}else{
+z1=qweibull(-log(p01+((1-p01)*runif(1,min=0,max=1)))/phi1,shape=1/g1,scale=1/g2)
+t1[i]=min(z1,C1[i])
+if(min(z1,C1[i])==z1){
+d1[i]=1
+}else{
+d1[i]=0
+count1c=count1c+1
+}
+}
+}
+
+#control group
+
+t0=rep(NA,n0)
+d0=rep(NA,n0)
+x0=rep(0,n0)
+
+phi0=exp(b0)
+
+U0=runif(n0,min=0,max=1)
+C0=rexp(n0,rate=c0)
+
+count0p=0
+count0c=0
+
+for(i in 1:n0){
+if(U0[i]<=p00){
+t0[i]=C0[i]
+d0[i]=0
+count0p=count0p+1
+}else{
+z0=qweibull(-log(p00+((1-p00)*runif(1,min=0,max=1)))/phi0,shape=1/g1,scale=1/g2)
+t0[i]=min(z0,C0[i])
+if(min(z0,C0[i])==z0){
+d0[i]=1
+}else{
+d0[i]=0
+count0c=count0c+1
+}
+}
+}
+
+return(data.frame(t=c(t1,t0),d=c(d1,d0),x=c(x1,x0)))
+
+}
+
+
+
+# generating data from Box-Cox for alpha = 1 using binary covariate
+
+
+data_1_Wei=function(n0,n1,g1,g2,p00,p01,c0,c1){
+
+b0=log((1/1)*((1/(p00^1))-1))
+b1=log((1/1)*((1/(p01^1))-1))-b0
+
+#treatment group
+
+t1=rep(NA,n1)
+d1=rep(NA,n1)
+x1=rep(1,n1)
+
+phi1=exp(b0+b1)/(1+(1*exp(b0+b1)))
+
+U1=runif(n1,min=0,max=1)
+C1=rexp(n1,rate=c1)
+
+count1p=0
+count1c=0
+
+for(i in 1:n1){
+if(U1[i]<=p01){
+t1[i]=C1[i]
+d1[i]=0
+count1p=count1p+1
+}else{
+z1=qweibull((1-((p01+((1-p01)*runif(1,min=0,max=1)))^1))/(1*phi1),shape=1/g1,scale=1/g2)
+t1[i]=min(z1,C1[i])
+if(min(z1,C1[i])==z1){
+d1[i]=1
+}else{
+d1[i]=0
+count1c=count1c+1
+}
+}
+}
+
+#control group
+
+t0=rep(NA,n0)
+d0=rep(NA,n0)
+x0=rep(0,n0)
+
+phi0=exp(b0)/(1+(1*exp(b0)))
+
+U0=runif(n0,min=0,max=1)
+C0=rexp(n0,rate=c0)
+
+count0p=0
+count0c=0
+
+for(i in 1:n0){
+if(U0[i]<=p00){
+t0[i]=C0[i]
+d0[i]=0
+count0p=count0p+1
+}else{
+z0=qweibull((1-((p00+((1-p00)*runif(1,min=0,max=1)))^1))/(1*phi0),shape=1/g1,scale=1/g2)
+t0[i]=min(z0,C0[i])
+if(min(z0,C0[i])==z0){
+d0[i]=1
+}else{
+d0[i]=0
+count0c=count0c+1
+}
+}
+}
+
+return(data.frame(t=c(t1,t0),d=c(d1,d0),x=c(x1,x0)))
+
+}
+
+
+
+# generating data from Box-Cox for alpha in (0,1) using binary covariate
+
+
+data_gen_Wei=function(n0,n1,g1,g2,alpha,p00,p01,c0,c1){    b0=log((1/alpha)*((1/(p00^alpha))-1))  b1=log((1/alpha)*((1/(p01^alpha))-1))-b0    #treatment group    t1=rep(NA,n1)  d1=rep(NA,n1)  x1=rep(1,n1)    phi1=exp(b0+b1)/(1+(alpha*exp(b0+b1)))    U1=runif(n1,min=0,max=1)  C1=rexp(n1,rate=c1)    count1p=0  count1c=0    for(i in 1:n1){    if(U1[i]<=p01){      t1[i]=C1[i]      d1[i]=0      count1p=count1p+1    }else{      z1=qweibull((1-((p01+((1-p01)*runif(1,min=0,max=1)))^alpha))/(alpha*phi1),shape=1/g1,scale=1/g2)      t1[i]=min(z1,C1[i])      if(min(z1,C1[i])==z1){        d1[i]=1      }else{        d1[i]=0        count1c=count1c+1      }    }  }    #control group    t0=rep(NA,n0)  d0=rep(NA,n0)  x0=rep(0,n0)    phi0=exp(b0)/(1+(alpha*exp(b0)))    U0=runif(n0,min=0,max=1)  C0=rexp(n0,rate=c0)    count0p=0  count0c=0    for(i in 1:n0){    if(U0[i]<=p00){      t0[i]=C0[i]      d0[i]=0      count0p=count0p+1    }else{      z0=qweibull((1-((p00+((1-p00)*runif(1,min=0,max=1)))^alpha))/(alpha*phi0),shape=1/g1,scale=1/g2)      t0[i]=min(z0,C0[i])      if(min(z0,C0[i])==z0){        d0[i]=1      }else{        d0[i]=0        count0c=count0c+1      }    }  }    return(data.frame(t=c(t1,t0),d=c(d1,d0),x=c(x1,x0)))  }
+
+# generating data from Box-Cox for alpha in (0,1) using continuous covariate
+
+
+data_gen_cont_Wei=function(m,g1,g2,p01,p02,c,x_min,x_max,alpha){
+
+b1= (log((1/alpha)*(((1/p01)^alpha)-1))-log((1/alpha)*(((1/p02)^alpha)-1)))/(x_max-x_min)
+b0= log((1/alpha)*(((1/p01)^alpha)-1))-(x_max*b1)
+
+t=rep(NA,m)
+d=rep(NA,m)
+x=runif(m,min=0.1,max=20)
+
+phi=exp(b0+b1*x)/(1+(alpha*exp(b0+b1*x)))
+p0=(1-(alpha*phi))^(1/alpha)
+
+C=rexp(m,rate=c)
+
+countp=0
+countc=0
+
+for(i in 1:m){
+U=runif(1,min=0,max=1)
+if(U<=p0[i]){
+t[i]=C[i]
+d[i]=0
+countp=countp+1
+}else{
+z=qweibull((1-((p0[i]+((1-p0[i])*runif(1,min=0,max=1)))^alpha))/(alpha*phi[i]),shape=1/g1,scale=1/g2)
+t[i]=min(z,C[i])
+if(min(z,C[i])==z){
+d[i]=1
+}else{
+d[i]=0
+countc=countc+1
+}
+}
+}
+
+return(data.frame(t,d,x))
+
+}
+
+
+
+
+# Function to calculate the negative of observed data log-likelihood function
+
+log.lik.fun = function(par=c(b10,b11,g1,g2,alp),data_obs,data_cens,xt,xc){ 
+
+Fc=1-exp(-((par[4]*data_cens)^(1/par[3])))
+
+phic=exp(par[1]+par[2]*xc)/(1+(par[5]*exp(par[1]+par[2]*xc)))
+Ft=1-exp(-((par[4]*data_obs)^(1/par[3])))
+phit=exp(par[1]+par[2]*xt)/(1+(par[5]*exp(par[1]+par[2]*xt)))
+
+ft=(1/(data_obs*par[3]))*((par[4]*data_obs)^(1/par[3]))*(1-Ft)
+
+Spc=(1-(par[5]*phic*Fc))^(1/par[5])
+Spt=(1-(par[5]*phit*Ft))^(1/par[5])
+fpt=Spt*phit*ft*((1-(par[5]*phit*Ft))^(-1))
+
+log.lik=sum(log(fpt))+sum(log(Spc))
+
+return(-log.lik)
+
+}#end of lik function
+
+
+
+# Line search method
+
+lambda = function(pars,d.k,g.k,data_obs,data_cens,xt,xc,del){
+
+k = 1
+cont = TRUE
+
+while(cont){
+lam.k = 1/(2^(k-1))
+pp = pars+(d.k*lam.k)
+pp.new = c(pp[1],pp[2],max(pp[3],0.01),max(pp[4],0.01),min(max(pp[5],0.01),1))
+cc1 = log.lik.fun(pp.new,data_obs=data_obs,data_cens=data_cens,xt=xt,xc=xc)
+cc2 = (log.lik.fun(pars,data_obs=data_obs,data_cens=data_cens,xt=xt,xc=xc)+(del*lam.k*sum(d.k*g.k))) 
+
+#cat("s = ", k ,",", "cc1 = ", cc1,",", "cc2 = ", cc2, "\n")
+
+if(  (cc1 != "NaN" & cc1 != Inf & cc2 != "NaN" & cc2 != "Inf") ){
+cont = (cc1 > cc2) & (k < 17) 
+k = k + 1
+}else{
+k = k + 1
+if(k>16){
+cont = FALSE
+}
+}
+
+}#end of while
+return(c(lam.k,k))
+}
+
+
+
+# Development of the NCG algorithm
+
+
+
+NCG_BC_Gen_Wei=function(data_obs,data_cens,xt,xc,tol,maxit,b0,b1,gam1,gam2,alpha,del){
+
+p.new=rep(0,5)
+p.old=rep(0,5)
+d.old=rep(0,5)
+d.new=rep(0,5)
+
+p.old = c(b0,b1,gam1,gam2,alpha)
+d.old = -1*grad(log.lik.fun,p.old,method="Richardson",data_obs=data_obs,data_cens=data_cens,xt=xt,xc=xc)
+
+
+continue = TRUE
+iter=1
+
+while(continue){
+
+#print(iter)
+
+g.old = grad(log.lik.fun,p.old,method="Richardson",data_obs=data_obs,data_cens=data_cens,xt=xt,xc=xc)
+lam.vec =  lambda(p.old,d.old,g.old,data_obs=data_obs,data_cens=data_cens,xt=xt,xc=xc,del=del) # lam calculated from line search algorithm
+
+if(lam.vec[2]>16){
+p.new = p.old
+
+#cat("lam = ", lam.vec[1],",", "k = ", lam.vec[2], ",", "pnew = ", p.new, ",","norm = ",sqrt(sum(g.old*g.old)), "," , "value of fn = ", 
+#log.lik.fun(p.old,data_obs=data_obs,data_cens=data_cens,xt=xt,xc=xc), "\n")
+
+continue = FALSE
+}else{
+
+p.new = p.old + (lam.vec[1]*d.old)
+dum1.new = (-1*grad(log.lik.fun,p.new,method="Richardson",data_obs=data_obs,data_cens=data_cens,xt=xt,xc=xc))
+g.new = -dum1.new
+
+#cat("lam = ", lam.vec[1], ",", "k = ", lam.vec[2], ",", "pnew = ", p.new, ",", "norm = ", sqrt(sum(g.new*g.new)), ",", "value of fn = ", 
+#log.lik.fun(p.new,data_obs=data_obs,data_cens=data_cens,xt=xt,xc=xc), "\n")
+
+y =  g.new - g.old
+dum2 = y - (2*d.old*sum(y*y)/sum(d.old*y))
+HG = sum(dum2*g.new)/sum(d.old*y)
+d.new = dum1.new + (HG*d.old)
+
+iter = iter + 1
+
+continue=(abs((p.new[1]-p.old[1])/p.old[1])>tol | abs((p.new[2]-p.old[2])/p.old[2])>tol | abs((p.new[3]-p.old[3])/p.old[3])>tol | 
+abs((p.new[4]-p.old[4])/p.old[4])>tol | abs((p.new[5]-p.old[5])/p.old[5])>tol) & (iter<maxit)
+
+p.old = p.new
+d.old = d.new
+#g.old = g.new
+
+if(iter==maxit){
+p.new=matrix(c(0,0,0,0,0))
+}
+
+}# end of else
+
+}#end of while
+
+
+result = p.new
+
+return(result)
+
+}# end of the main function
+
+
+
+# Illustrative examples
+
+
+# Example 1: generating data from Box-Cox for alpha = 0 using binary covariate but fitting general BC model (Table 4 setting 1 for NCG results)
+
+
+n = 500
+
+n1=120
+n0=80
+p01_true=0.65
+p00_true=0.35
+g1_true=0.316
+g2_true=0.179
+tol=0.001
+maxit=500
+incr=0.20
+c0=0.10
+c1=0.15
+del = 0.1
+
+
+beta0_hat=rep(NA,n)
+temp_b0=rep(NA,n)
+beta1_hat=rep(NA,n)
+temp_b1=rep(NA,n)
+g1_hat=rep(NA,n)
+temp_g1=rep(NA,n)
+g2_hat=rep(NA,n)
+temp_g2=rep(NA,n)
+alpha_hat=rep(NA,n)
+temp_alpha=rep(NA,n)
+
+alpha_true = 0
+b0_true=log(-log(p00_true))
+b1_true=log(-log(p01_true))-b0_true
+
+count=0
+
+for(i in 1:n){
+print(i)
+set.seed(100+i)
+
+data=data_0_Wei(n0,n1,g1_true,g2_true,p00_true,p01_true,c0,c1)
+
+obs_data=data[data$d==1,]
+cens_data=data[data$d==0,]
+data_obs=obs_data$t
+data_cens=cens_data$t
+xt=obs_data$x
+xc=cens_data$x
+
+b0_init=sample(seq((b0_true-(incr*abs(b0_true))),(b0_true+(incr*abs(b0_true))),by=0.01),1)
+b1_init=sample(seq((b1_true-(incr*abs(b1_true))),(b1_true+(incr*abs(b1_true))),by=0.01),1)
+g1_init=sample(seq((g1_true-(incr*abs(g1_true))),(g1_true+(incr*abs(g1_true))),by=0.01),1)
+g2_init=sample(seq((g2_true-(incr*abs(g2_true))),(g2_true+(incr*abs(g2_true))),by=0.01),1)
+alpha_init=sample(seq(0.01,(0.01+(incr*abs(alpha_true))),by=0.01),1)
+
+nr = NCG_BC_Gen_Wei(data_obs,data_cens,xt,xc,0.001,500,b0_init,b1_init,g1_init,g2_init,alpha_init,del)
+
+if(nr[1]==0 & nr[2]==0 & nr[3]==0 & nr[4]==0 & nr[5]==0){
+
+count=count+1
+
+beta0_hat[i]=0
+temp_b0[i]=0
+beta1_hat[i]=0
+temp_b1[i]=0
+g1_hat[i]=0
+temp_g1[i]=0
+g2_hat[i]=0
+temp_g2[i]=0
+alpha_hat[i]=0
+temp_alpha[i]=0
+
+}else{
+
+beta0_hat[i]=nr[1]
+temp_b0[i]=beta0_hat[i]-b0_true
+beta1_hat[i]=nr[2]
+temp_b1[i]=beta1_hat[i]-b1_true
+g1_hat[i]=nr[3]
+temp_g1[i]=g1_hat[i]-g1_true
+g2_hat[i]=nr[4]
+temp_g2[i]=g2_hat[i]-g2_true
+alpha_hat[i]=nr[5]
+temp_alpha[i]=alpha_hat[i]-alpha_true
+
+}#end of else
+
+}#end of for
+
+
+avg_b0=sum(beta0_hat)/(n-count)
+avg_b1=sum(beta1_hat)/(n-count)
+avg_g1=sum(g1_hat)/(n-count)
+avg_g2=sum(g2_hat)/(n-count)
+avg_alpha = sum(alpha_hat)/(n-count)
+
+
+bias_b0=sum(temp_b0)/(n-count)
+bias_b1=sum(temp_b1)/(n-count)
+bias_g1=sum(temp_g1)/(n-count)
+bias_g2=sum(temp_g2)/(n-count)
+bias_alpha=sum(temp_alpha)/(n-count)
+
+
+mse_b0=sum(temp_b0^2)/(n-count-1)
+mse_b1=sum(temp_b1^2)/(n-count-1)
+mse_g1=sum(temp_g1^2)/(n-count-1)
+mse_g2=sum(temp_g2^2)/(n-count-1)
+mse_alpha=sum(temp_alpha^2)/(n-count-1)
+
+
+rmse_b0=sqrt(mse_b0)
+rmse_b1=sqrt(mse_b1)
+rmse_g1=sqrt(mse_g1)
+rmse_g2=sqrt(mse_g2)
+rmse_alpha=sqrt(mse_alpha)
+
+
+
+bias_b0
+bias_b1
+bias_g1
+bias_g2
+bias_alpha
+
+rmse_b0
+rmse_b1
+rmse_g1
+rmse_g2
+rmse_alpha
+
+
+
+# Example 2: generating data from Box-Cox for alpha = 1 using binary covariate but fitting general BC model (Table 4 setting 3 for NCG results)
+
+
+n = 500
+
+n1=120
+n0=80
+p01_true=0.65
+p00_true=0.35
+g1_true=0.316
+g2_true=0.179
+tol=0.001
+maxit=500
+incr=0.20
+c0=0.10
+c1=0.15
+del = 0.1
+
+
+beta0_hat=rep(NA,n)
+temp_b0=rep(NA,n)
+beta1_hat=rep(NA,n)
+temp_b1=rep(NA,n)
+g1_hat=rep(NA,n)
+temp_g1=rep(NA,n)
+g2_hat=rep(NA,n)
+temp_g2=rep(NA,n)
+alpha_hat=rep(NA,n)
+temp_alpha=rep(NA,n)
+
+alpha_true = 1
+b0_true=log((1/1)*((1/(p00_true^1))-1))
+b1_true=log((1/1)*((1/(p01_true^1))-1))-b0_true
+
+count=0
+
+for(i in 1:n){
+print(i)
+set.seed(100+i)
+
+data=data_1_Wei(n0,n1,g1_true,g2_true,p00_true,p01_true,c0,c1)
+
+obs_data=data[data$d==1,]
+cens_data=data[data$d==0,]
+data_obs=obs_data$t
+data_cens=cens_data$t
+xt=obs_data$x
+xc=cens_data$x
+
+b0_init=sample(seq((b0_true-(incr*abs(b0_true))),(b0_true+(incr*abs(b0_true))),by=0.01),1)
+b1_init=sample(seq((b1_true-(incr*abs(b1_true))),(b1_true+(incr*abs(b1_true))),by=0.01),1)
+g1_init=sample(seq((g1_true-(incr*abs(g1_true))),(g1_true+(incr*abs(g1_true))),by=0.01),1)
+g2_init=sample(seq((g2_true-(incr*abs(g2_true))),(g2_true+(incr*abs(g2_true))),by=0.01),1)
+alpha_init=sample(seq((alpha_true-(incr*abs(alpha_true))),1,by=0.01),1)
+
+nr = NCG_BC_Gen_Wei(data_obs,data_cens,xt,xc,0.001,500,b0_init,b1_init,g1_init,g2_init,alpha_init,del)
+
+if(nr[1]==0 & nr[2]==0 & nr[3]==0 & nr[4]==0 & nr[5]==0){
+
+count=count+1
+
+beta0_hat[i]=0
+temp_b0[i]=0
+beta1_hat[i]=0
+temp_b1[i]=0
+g1_hat[i]=0
+temp_g1[i]=0
+g2_hat[i]=0
+temp_g2[i]=0
+alpha_hat[i]=0
+temp_alpha[i]=0
+
+}else{
+
+beta0_hat[i]=nr[1]
+temp_b0[i]=beta0_hat[i]-b0_true
+beta1_hat[i]=nr[2]
+temp_b1[i]=beta1_hat[i]-b1_true
+g1_hat[i]=nr[3]
+temp_g1[i]=g1_hat[i]-g1_true
+g2_hat[i]=nr[4]
+temp_g2[i]=g2_hat[i]-g2_true
+alpha_hat[i]=nr[5]
+temp_alpha[i]=alpha_hat[i]-alpha_true
+
+}#end of else
+
+}#end of for
+
+
+avg_b0=sum(beta0_hat)/(n-count)
+avg_b1=sum(beta1_hat)/(n-count)
+avg_g1=sum(g1_hat)/(n-count)
+avg_g2=sum(g2_hat)/(n-count)
+avg_alpha = sum(alpha_hat)/(n-count)
+
+
+bias_b0=sum(temp_b0)/(n-count)
+bias_b1=sum(temp_b1)/(n-count)
+bias_g1=sum(temp_g1)/(n-count)
+bias_g2=sum(temp_g2)/(n-count)
+bias_alpha=sum(temp_alpha)/(n-count)
+
+
+mse_b0=sum(temp_b0^2)/(n-count-1)
+mse_b1=sum(temp_b1^2)/(n-count-1)
+mse_g1=sum(temp_g1^2)/(n-count-1)
+mse_g2=sum(temp_g2^2)/(n-count-1)
+mse_alpha=sum(temp_alpha^2)/(n-count-1)
+
+
+rmse_b0=sqrt(mse_b0)
+rmse_b1=sqrt(mse_b1)
+rmse_g1=sqrt(mse_g1)
+rmse_g2=sqrt(mse_g2)
+rmse_alpha=sqrt(mse_alpha)
+
+
+bias_b0
+bias_b1
+bias_g1
+bias_g2
+bias_alpha
+
+rmse_b0
+rmse_b1
+rmse_g1
+rmse_g2
+rmse_alpha
+
+
+
+
+
+
